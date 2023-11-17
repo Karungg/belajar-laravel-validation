@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -114,5 +115,53 @@ class ValidatorTest extends TestCase
         } catch (ValidationException $exception) {
             self::fail($exception->getMessage());
         }
+    }
+
+    public function testLocalization()
+    {
+        App::setLocale("id");
+        $data = [
+            "username" => "admin",
+            "password" => "test"
+        ];
+
+        $rules = [
+            "username" => "required|email|max:100",
+            "password" => "required|min:6|max:20"
+        ];
+
+        $validator = Validator::make($data, $rules);
+        self::assertTrue($validator->fails());
+        Log::info($validator->errors()->toJson(JSON_PRETTY_PRINT));
+    }
+
+    public function testValidatorInlineMessage()
+    {
+        $data = [
+            "username" => "eko",
+            "password" => "eko"
+        ];
+
+        $rules = [
+            "username" => "required|email|max:100",
+            "password" => ["required", "min:6", "max:20"]
+        ];
+
+        $messages = [
+            "required" => ":attribute harus diisi",
+            "email" => ":attribute harus berupa email",
+            "min" => ":attribute minimal :min karakter",
+            "max" => ":attribute maksimal :max karakter",
+        ];
+
+        $validator = Validator::make($data, $rules, $messages);
+        self::assertNotNull($validator);
+
+        self::assertFalse($validator->passes());
+        self::assertTrue($validator->fails());
+
+        $message = $validator->getMessageBag();
+
+        Log::info($message->toJson(JSON_PRETTY_PRINT));
     }
 }
