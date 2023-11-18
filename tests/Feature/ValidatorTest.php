@@ -261,4 +261,63 @@ class ValidatorTest extends TestCase
         self::assertTrue($validator->fails());
         Log::info($validator->errors()->toJson(JSON_PRETTY_PRINT));
     }
+
+    public function testValidatorNestedArrayValidation()
+    {
+        $data = [
+            "name" => [
+                "first" => "Miftah",
+                "last" => "Fadilah"
+            ],
+            "address" => [
+                "street" => "Jl. Dramaga",
+                "city" => "Bogor",
+                "country" => "Indonesia"
+            ]
+        ];
+
+        $rules = [
+            "name.first" => ["required", "max:100"],
+            "name.last" => ["max:100"],
+            "address.street" => ["max:200"],
+            "address.city" => ["required", "max:100"],
+            "address.country" => ["required", "max:100"]
+        ];
+
+        $validator = Validator::make($data, $rules);
+        self::assertTrue($validator->passes());
+    }
+
+    public function testValidatorIndexedArrayValidation()
+    {
+        $data = [
+            "name" => [
+                "first" => "Miftah",
+                "last" => "Fadilah"
+            ],
+            "address" => [
+                [
+                    "street" => "Jl. Dramaga",
+                    "city" => "Bogor",
+                    "country" => "Indonesia"
+                ],
+                [
+                    "street" => "Jl. Dramaga",
+                    "city" => "Bogor",
+                    "country" => "Indonesia"
+                ]
+            ]
+        ];
+
+        $rules = [
+            "name.first" => ["required", "max:100"],
+            "name.last" => ["max:100"],
+            "address.*.street" => ["max:200"],
+            "address.*.city" => ["required", "max:100"],
+            "address.*.country" => ["required", "max:100"]
+        ];
+
+        $validator = Validator::make($data, $rules);
+        self::assertTrue($validator->passes());
+    }
 }
